@@ -18,6 +18,7 @@ namespace SnippingTool169
         Rectangle ImageInPicture;
         Rectangle SnipSize = new Rectangle(0, 0, 640, 360);
         Rectangle oldSnipSize;
+        Point Aspect = new Point(16,9);
         double Zoom;
 
         public form()
@@ -176,10 +177,14 @@ namespace SnippingTool169
         private void form_MouseWheel(object sender, MouseEventArgs e)
         {
             var delta = e.Delta * -0.1;
+            ResizeSnipSize(delta);
+        }
+        private void ResizeSnipSize(double delta)
+        {
             var width = SnipSize.Size.Width + delta;
             SnipSize.Size = new Size(
                 (int)(width),
-                (int)(width * 9 / 16));
+                (int)(width * Aspect.Y / Aspect.X));
 
             MyReflesh();
         }
@@ -187,13 +192,26 @@ namespace SnippingTool169
 
         private void form_MouseDown(object sender, MouseEventArgs e)
         {
-            
+            switch (e.Button)
+            {
+                case MouseButtons.Left:
+                    form_LeftMouseDown();
+                    break;
+                case MouseButtons.Right:
+                    form_RightMouseDown();
+                    break;
+            }
+
+        }
+
+        private void form_LeftMouseDown()
+        {
             //ビットマップ作成
             var img = new Bitmap(SnipSize.Width, SnipSize.Height);
             using (var g = Graphics.FromImage(img))
             {
                 g.DrawImage(ScreenImage,
-                    new Rectangle(0,0,SnipSize.Width,SnipSize.Height),SnipSize,GraphicsUnit.Pixel);
+                    new Rectangle(0, 0, SnipSize.Width, SnipSize.Height), SnipSize, GraphicsUnit.Pixel);
             }
 
             //ファイルパス作成
@@ -202,7 +220,7 @@ namespace SnippingTool169
             for (int i = 0; true; i++)
             {
                 var file = $"{desktop}{Path.DirectorySeparatorChar}snip_{i}.png";
-                if(!File.Exists(file))
+                if (!File.Exists(file))
                 {
                     img.Save(file, ImageFormat.Png);
                     break;
@@ -211,6 +229,18 @@ namespace SnippingTool169
             }
             //終了。
             this.Close();
+        }
+        private void form_RightMouseDown()
+        {
+            var tmp = Aspect.Y;
+            Aspect.Y = Aspect.X;
+            Aspect.X = tmp;
+
+            SnipSize.Size = new Size(
+                SnipSize.Size.Height,
+                SnipSize.Size.Width);
+
+            ResizeSnipSize(0);
         }
 
         private void form_MouseMove(object sender, MouseEventArgs e)
